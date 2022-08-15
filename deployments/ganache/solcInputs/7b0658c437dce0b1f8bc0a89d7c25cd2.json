@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/Token.sol": {
+      "content": "//SPDX-License-Identifier: UNLICENSED\n\n// Solidity files have to start with this pragma.\n// It will be used by the Solidity compiler to validate its version.\npragma solidity ^0.8.9;\n\n// This is the main building block for smart contracts.\ncontract Token {\n    // Some string type variables to identify the token.\n    string public name = \"My Hardhat Token\";\n    string public symbol = \"MHT\";\n\n    // The fixed amount of tokens, stored in an unsigned integer type variable.\n    uint256 public totalSupply = 1000000;\n\n    // An address type variable is used to store ethereum accounts.\n    address public owner;\n\n    // A mapping is a key/value map. Here we store each account's balance.\n    mapping(address => uint256) balances;\n\n    // The Transfer event helps off-chain aplications understand\n    // what happens within your contract.\n    event Transfer(address indexed _from, address indexed _to, uint256 _value);\n\n    /**\n     * Contract initialization.\n     */\n    constructor() {\n        // The totalSupply is assigned to the transaction sender, which is the\n        // account that is deploying the contract.\n        balances[msg.sender] = totalSupply;\n        owner = msg.sender;\n    }\n\n    /**\n     * A function to transfer tokens.\n     *\n     * The `external` modifier makes a function *only* callable from *outside*\n     * the contract.\n     */\n    function transfer(address to, uint256 amount) external {\n        // Check if the transaction sender has enough tokens.\n        // If `require`'s first argument evaluates to `false` then the\n        // transaction will revert.\n        require(balances[msg.sender] >= amount, \"Not enough tokens\");\n\n        // Transfer the amount.\n        balances[msg.sender] -= amount;\n        balances[to] += amount;\n\n        // Notify off-chain applications of the transfer.\n        emit Transfer(msg.sender, to, amount);\n    }\n\n    /**\n     * Read only function to retrieve the token balance of a given account.\n     *\n     * The `view` modifier indicates that it doesn't modify the contract's\n     * state, which allows us to call it without executing a transaction.\n     */\n    function balanceOf(address account) external view returns (uint256) {\n        return balances[account];\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "storageLayout",
+          "devdoc",
+          "userdoc",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

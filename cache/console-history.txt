@@ -1,0 +1,12 @@
+(await t.getX()).toNumber()
+t.setX(69)
+(await t.getX()).toNumber()
+t.setX(69)
+(await t.getX()).toNumber()
+await t.getX()
+t.getX()
+let t = await Token.attach("0xD3C54A1c44D0D6dE5E08D7653e095B75fd873323")
+let token = await Token.attach("0xD3C54A1c44D0D6dE5E08D7653e095B75fd873323")
+token
+let token = Token.deployed()
+let Token = await ethers.getContractFactory("Token")
