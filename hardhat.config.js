@@ -21,8 +21,11 @@ module.exports = {
   solidity: "0.8.9",
   defaultNetwork: "ganache",
   networks: {
+    local: {
+      url: 'http://localhost:8545',
+    },
     ganache: {
-      url: "http://127.0.0.1:7545", // Localhost (default: none)
+      url: "HTTP://127.0.0.1:7545", // Localhost (default: none)
       accounts: accounts,
     },
     mainnet: {
@@ -36,6 +39,7 @@ module.exports = {
       gasPrice: 40000000000,
       timeout: 50000,
       accounts: accounts,
+      chainId: 80001
     },
   },
   gasReporter: {
