@@ -17,7 +17,10 @@ const deployToken = async (hre) => {
         },
       },
     });
+    const indexer = await hre.deployments.get('Indexer');
+    console.log("-> Indexer address: ", indexer.address);
   };
+
   module.exports = deployToken;
   deployToken.tags = ["Token"];
   

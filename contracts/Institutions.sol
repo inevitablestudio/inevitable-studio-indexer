@@ -27,6 +27,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         string baseURI;
         uint256 activeStudentsBalance;
     }
+    // courseId => Course
     mapping(uint256 => Course) public courses;
     mapping(string => bool) public baseURIExists;
     CountersUpgradeable.Counter public courseCounter;
@@ -35,6 +36,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         uint256 id;
         bool isCertified;
     }
+    // courseId => studentAddress => Student
     mapping(uint256 => mapping(address => Student)) public students;
     CountersUpgradeable.Counter public studentCounter;
 
@@ -68,7 +70,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     }
     
     // Student management
-    function registerStudent(uint256 courseId, address student) 
+    function generateCertificate(uint256 courseId, address student) 
     public 
     onlyRole(MINTER_ROLE) 
     onlyActiveCourse(courseId) 
@@ -95,13 +97,9 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     }
 
     function getCertificateId(uint256 courseId, address student) public view returns (uint256) {
-        uint256 certificatesBalance = StudentsERC721(studentsERC721).balanceOf(student);
-        for (uint i = 0; i < certificatesBalance; i++) {
-            uint256 certificateId = StudentsERC721(studentsERC721).tokenOfOwnerByIndex(student, i);
-            string memory tokenURI = StudentsERC721(studentsERC721).tokenURI(certificateId);
-            string memory localCertificateURI = getCertificateURI(courseId, certificateId);
-            if (keccak256(abi.encodePacked(localCertificateURI)) == keccak256(abi.encodePacked((tokenURI)))) {
-                return certificateId;
+        for (uint i = 0; i < courseCounter.current(); i++) {
+            if (students[courseId][student].isCertified) {
+                return students[courseId][student].id;
             }
         }
         revert("Student has no certificate");
@@ -135,8 +133,9 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     onlyActiveCourse(courseId)
     onlyUncertifiedStudent(courseId, student)
     onlyRole(MINTER_ROLE) {
-        StudentsERC721(studentsERC721).safeMint(student, courses[courseId].baseURI);
+        uint256 certificateId = StudentsERC721(studentsERC721).safeMint(student, courses[courseId].baseURI);
         courses[courseId].activeStudentsBalance += 1;
+        students[courseId][student].id = certificateId;
     }
 
     // Helper functions

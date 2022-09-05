@@ -17,7 +17,10 @@ const deployToken = async (hre) => {
         },
       },
     });
+    const institution = await hre.deployments.get('Institutions');
+    console.log("-> Institution address: ", institution.address);
   };
+
   module.exports = deployToken;
   deployToken.tags = ["Token"];
   

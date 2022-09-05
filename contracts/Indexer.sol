@@ -21,7 +21,7 @@ contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable
         uint256 activeCoursesBalance;
     }
     mapping(address => Institution) public institutions;
-    mapping(uint256 => address) public institutionsIdToAddress;
+    mapping(uint256 => address) public institutionIdToAddress;
     CountersUpgradeable.Counter public institutionCounter;
 
     constructor() {
@@ -38,7 +38,7 @@ contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable
     }
 
     function unregisterInstitution(uint256 institutionId) public onlyRole(DEFAULT_ADMIN_ROLE) onlyActiveInstitution(institutionId) {
-        institutions[institutionsIdToAddress[institutionId]].isActive = false;
+        institutions[institutionIdToAddress[institutionId]].isActive = false;
     }
 
     function initialize() initializer public {
@@ -73,12 +73,12 @@ contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable
     }
 
     function getInstitutionContract(uint256 institutionId) internal view returns (Institutions) {
-        address institutionAddress = institutionsIdToAddress[institutionId];
+        address institutionAddress = institutionIdToAddress[institutionId];
         return Institutions(institutionAddress);
     }
 
     modifier onlyActiveInstitution(uint256 institutionId) {
-        require(institutions[institutionsIdToAddress[institutionId]].isActive, "Institution inactive");
+        require(institutions[institutionIdToAddress[institutionId]].isActive, "Institution inactive");
         _;
     }
 }
