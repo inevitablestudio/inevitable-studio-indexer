@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/dinizsa/Documents/inevitable/inevitable-studio-indexer/contracts/Indexer.sol": {
-      "lastModificationDate": 1662416204453,
-      "contentHash": "52c937a230a53203ee743e88e214dde6",
+      "lastModificationDate": 1662656898236,
+      "contentHash": "5fdd7a8dda53594e94b82d1e28ec31a8",
       "sourceName": "contracts/Indexer.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -40,7 +40,7 @@
         "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol",
-        "@openzeppelin/contracts/utils/introspection/IERC165.sol",
+        "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
         "./Institutions.sol"
@@ -371,8 +371,8 @@
       ]
     },
     "/Users/dinizsa/Documents/inevitable/inevitable-studio-indexer/contracts/Institutions.sol": {
-      "lastModificationDate": 1662414146889,
-      "contentHash": "3aac345dd7b68a69594d75b715b312dd",
+      "lastModificationDate": 1662656878277,
+      "contentHash": "64c63e74a11f76e75721909f5dae21de",
       "sourceName": "contracts/Institutions.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -409,10 +409,10 @@
         "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol",
-        "@openzeppelin/contracts/utils/introspection/IERC165.sol",
+        "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
-        "@openzeppelin/contracts/utils/Strings.sol",
+        "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
         "./StudentsERC721.sol"
       ],
       "versionPragmas": [
@@ -896,7 +896,7 @@
       ]
     },
     "/Users/dinizsa/Documents/inevitable/inevitable-studio-indexer/contracts/StudentsERC721.sol": {
-      "lastModificationDate": 1662369396337,
+      "lastModificationDate": 1662654317010,
       "contentHash": "2409df4e1fed31cd144d3daaf7afbf30",
       "sourceName": "contracts/StudentsERC721.sol",
       "solcConfig": {

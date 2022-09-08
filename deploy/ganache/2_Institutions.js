@@ -1,7 +1,9 @@
 const deployToken = async (hre) => {
     const { deploy } = hre.deployments;
     const { deployer } = await hre.getNamedAccounts();
-  
+
+    console.log("deployer: ", deployer);
+    
     await deploy("Institutions", {
       from: deployer,
       args: [],

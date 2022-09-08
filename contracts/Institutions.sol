@@ -5,10 +5,10 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol"; 
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "./StudentsERC721.sol";
 
 contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgradeable {
@@ -41,7 +41,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     CountersUpgradeable.Counter public studentCounter;
 
     constructor() {
-        // _disableInitializers();
+        _disableInitializers();
     }
 
     function initialize() initializer public {
@@ -141,14 +141,14 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     // Helper functions
     function setStudentsERC721(address _studentsERC721) onlyRole(DEFAULT_ADMIN_ROLE) public {
         require(
-            IERC165(_studentsERC721).supportsInterface(INTERFACE_ERC721),
+            ERC165Upgradeable(_studentsERC721).supportsInterface(INTERFACE_ERC721),
             "Contract must derive from ERC721"
         );
         studentsERC721 = _studentsERC721;
     }
 
     function getCertificateURI(uint courseId, uint256 certificateURI) internal view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        return string(abi.encodePacked(courses[courseId].baseURI, Strings.toString(certificateURI)));
+        return string(abi.encodePacked(courses[courseId].baseURI, StringsUpgradeable.toString(certificateURI)));
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

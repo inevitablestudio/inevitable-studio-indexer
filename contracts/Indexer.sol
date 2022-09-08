@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "./Institutions.sol";
@@ -25,12 +25,12 @@ contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable
     CountersUpgradeable.Counter public institutionCounter;
 
     constructor() {
-        // _disableInitializers();
+        _disableInitializers();
     }
 
     // Institution management
     function registerInstitution(address institutionAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(IERC165(institutionAddress).supportsInterface(INSTITUTIONS_INTERFACE_ID), "Contract must implement Institutions interface");
+        require(ERC165Upgradeable(institutionAddress).supportsInterface(INSTITUTIONS_INTERFACE_ID), "Contract must implement Institutions interface");
         institutions[institutionAddress].id = institutionCounter.current();
         institutions[institutionAddress].activeCoursesBalance = 0;
         institutions[institutionAddress].isActive = true;
