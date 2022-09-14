@@ -133,10 +133,11 @@ contract Institution is Initializable, PausableUpgradeable, AccessControlUpgrade
     }
 
     function getAllStudentIds(address student) public view returns (uint256[] memory) {
-        uint256 studentBalance = StudentsERC721(studentsERC721).balanceOf(student);
         uint256[] memory tokensIds;
-        for (uint i = 0; i < studentBalance; i++) {
-            tokensIds[i] = StudentsERC721(studentsERC721).tokenOfOwnerByIndex(student, i);
+        for (uint i = 0; i < courseCounter.current(); i++) {
+            if (students[i][student].isActive) {
+                tokensIds[i] = students[i][student].id;
+            }
         }
         return tokensIds;
     }
