@@ -38,7 +38,7 @@ contract StudentsERC721 is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "http://localhost:3000";
+        return "";
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "./StudentsERC721.sol";
 
-contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgradeable {
+contract Institution is Initializable, PausableUpgradeable, AccessControlUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
     event CourseRegistered (
@@ -36,7 +33,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         address studentAddress
     );
 
-    bytes4 public constant INSTITUTIONS_INTERFACE_ID = 0x494e5354;
+    bytes4 public constant INSTITUTION_INTERFACE_ID = 0x494e5354;
     bytes4 public constant INTERFACE_ERC721 = 0x80ac58cd;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -52,12 +49,12 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     }
     // courseId => Course
     mapping(uint256 => Course) public courses;
-    mapping(string => bool) public baseURIExists;
     CountersUpgradeable.Counter public courseCounter;
+    CountersUpgradeable.Counter public activeCourseCounter;
 
     struct Student {
         uint256 id;
-        bool isCertified;
+        bool isActive;
     }
     // courseId => studentAddress => Student
     mapping(uint256 => mapping(address => Student)) public students;
@@ -99,10 +96,6 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         emit CourseUnregistered(courseId, courses[courseId].name);
     }
 
-    function getCourseURI(uint256 courseId) public view returns (string memory) {
-        return courses[courseId].baseURI;
-    }
-
     function getCourse(uint256 courseId) public view returns (Course memory) {
         return courses[courseId];
     }
@@ -112,74 +105,49 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     public 
     onlyRole(MINTER_ROLE) 
     onlyActiveCourse(courseId) 
-    onlyUncertifiedStudent(courseId, student)
+    onlyInactiveStudent(courseId, student)
     nonZero(student) {
-        require(!students[courseId][student].isCertified, "Student already registered");
         uint256 studentId = StudentsERC721(studentsERC721).safeMint(student, courses[courseId].baseURI);
         students[courseId][student].id = studentId;
-        students[courseId][student].isCertified = true;
-        studentCounter.increment();
+        students[courseId][student].isActive = true;
         courses[courseId].activeStudentsBalance += 1;
         courses[courseId].studentsBalance += 1;
+        studentCounter.increment();
         
         emit StudentRegistered(courseId, studentId, student);
     }
 
-    function unregisterStudent(uint256 courseId, address student) public onlyRole(MINTER_ROLE) onlyCertifiedStudent(courseId, student) {
-        students[courseId][student].isCertified = false;
+    function unregisterStudent(uint256 courseId, address student) public onlyRole(MINTER_ROLE) onlyActiveStudent(courseId, student) {
+        students[courseId][student].isActive = false;
         courses[courseId].activeStudentsBalance -= 1;
 
         emit StudentUnregistered(courseId, students[courseId][student].id, student);
     }
 
-    function getStudentCertificate(uint256 courseId, address student) 
-    public view 
-    nonZero(student) 
-    onlyCertifiedStudent(courseId, student) 
-    returns (uint256) {
-        return StudentsERC721(studentsERC721).tokenOfOwnerByIndex(student, 0);
+    function getStudentId(uint256 courseId, address student) public view onlyActiveStudent(courseId, student) returns (uint256) {
+        return students[courseId][student].id;
     }
 
-    function getCertificateId(uint256 courseId, address student) public view returns (uint256) {
-        for (uint i = 0; i < courseCounter.current(); i++) {
-            if (students[courseId][student].isCertified) {
-                return students[courseId][student].id;
-            }
-        }
-        revert("Student has no certificate");
+    function getStudentURI(uint256 courseId, address student) public view onlyActiveStudent(courseId, student) returns (string memory) {
+        return StudentsERC721(studentsERC721).tokenURI(students[courseId][student].id);
     }
 
-    function getCertificateURI(uint256 certificateId) public view returns (string memory) {
-        return StudentsERC721(studentsERC721).tokenURI(certificateId);
-    }
-
-    function getAllCertificatesIds(address student) public view returns (uint256[] memory) {
-        uint256 certificatesBalance = StudentsERC721(studentsERC721).balanceOf(student);
+    function getAllStudentIds(address student) public view returns (uint256[] memory) {
+        uint256 studentBalance = StudentsERC721(studentsERC721).balanceOf(student);
         uint256[] memory tokensIds;
-        for (uint i = 0; i < certificatesBalance; i++) {
+        for (uint i = 0; i < studentBalance; i++) {
             tokensIds[i] = StudentsERC721(studentsERC721).tokenOfOwnerByIndex(student, i);
         }
         return tokensIds;
     }
 
-    function getAllCertificatesURIs(address student) public view returns (string[] memory) {
-        uint256[] memory certificatesIds = getAllCertificatesIds(student);
+    function getAllStudentURIs(address student) public view returns (string[] memory) {
+        uint256[] memory studentIds = getAllStudentIds(student);
         string[] memory tokensURI;
-        for (uint i = 0; i < certificatesIds.length; i++) {
-            tokensURI[i] = StudentsERC721(studentsERC721).tokenURI(certificatesIds[i]);
+        for (uint i = 0; i < studentIds.length; i++) {
+            tokensURI[i] = StudentsERC721(studentsERC721).tokenURI(studentIds[i]);
         }
         return tokensURI;
-    }
-
-    function certifyStudent(uint256 courseId, address student) 
-    public
-    nonZero(student) 
-    onlyActiveCourse(courseId)
-    onlyUncertifiedStudent(courseId, student)
-    onlyRole(MINTER_ROLE) {
-        uint256 certificateId = StudentsERC721(studentsERC721).safeMint(student, courses[courseId].baseURI);
-        courses[courseId].activeStudentsBalance += 1;
-        students[courseId][student].id = certificateId;
     }
 
     // Helper functions
@@ -189,10 +157,6 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
             "Contract must derive from ERC721"
         );
         studentsERC721 = _studentsERC721;
-    }
-
-    function getCertificateURI(uint courseId, uint256 certificateURI) internal view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        return string(abi.encodePacked(courses[courseId].baseURI, StringsUpgradeable.toString(certificateURI)));
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {
@@ -209,7 +173,7 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         override(AccessControlUpgradeable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || interfaceId == INSTITUTIONS_INTERFACE_ID;
+        return super.supportsInterface(interfaceId) || interfaceId == INSTITUTION_INTERFACE_ID;
     }
 
     // Modifiers
@@ -223,14 +187,13 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
         _;
     }
 
-    modifier onlyCertifiedStudent(uint256 courseId, address studentId) {
-        require(students[courseId][studentId].isCertified, "Student is not certified");
+    modifier onlyActiveStudent(uint256 courseId, address studentId) {
+        require(students[courseId][studentId].isActive, "Student not registered");
         _;
     }
 
-    modifier onlyUncertifiedStudent(uint256 courseId, address studentId) {
-        require(students[courseId][studentId].isCertified, "Student is already certified");
-        _;
+    modifier onlyInactiveStudent(uint256 courseId, address studentId) {
+        require(!students[courseId][studentId].isActive, "Student already registered");
         _;
     }
 }
