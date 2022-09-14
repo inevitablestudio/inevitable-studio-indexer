@@ -14,17 +14,40 @@ import "./StudentsERC721.sol";
 contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
+    event CourseRegistered (
+        uint256 courseId,
+        string courseName
+    );
+
+    event CourseUnregistered (
+        uint256 courseId,
+        string courseName
+    );
+
+    event StudentRegistered (
+        uint256 courseId,
+        uint256 studentId,
+        address studentAddress
+    );
+
+    event StudentUnregistered (
+        uint256 courseId,
+        uint256 studentId,
+        address studentAddress
+    );
+
     bytes4 public constant INSTITUTIONS_INTERFACE_ID = 0x494e5354;
     bytes4 public constant INTERFACE_ERC721 = 0x80ac58cd;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    string public baseURI;
     address public studentsERC721;
 
     struct Course {
+        string name;
         bool isActive;
         string baseURI;
+        uint256 studentsBalance;
         uint256 activeStudentsBalance;
     }
     // courseId => Course
@@ -54,38 +77,59 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     }
     
     // Courses management
-    function registerCourse(string memory _baseURI) public onlyRole(MINTER_ROLE) onlyUniqueBaseURI(_baseURI) {
-        courses[courseCounter.current()].activeStudentsBalance = 0;
-        courses[courseCounter.current()].isActive = true;
-        courses[courseCounter.current()].baseURI = _baseURI;
+    function registerCourse(string memory courseBaseURI, string memory courseName) public onlyRole(MINTER_ROLE) {
+        require(studentsERC721 != address(0), "StudentsERC721 not defined");
+        uint256 courseId = courseCounter.current();
+        courses[courseId].studentsBalance = 0;
+        courses[courseId].activeStudentsBalance = 0;
+        courses[courseId].isActive = true;
+        courses[courseId].baseURI = courseBaseURI;
+        courses[courseId].name = courseName;
+        
         courseCounter.increment();
+        activeCourseCounter.increment();
+
+        emit CourseRegistered(courseId, courseName);
     }
 
     function unregisterCourse(uint256 courseId) public onlyRole(MINTER_ROLE) onlyActiveCourse(courseId) {
         courses[courseId].isActive = false;
+        activeCourseCounter.decrement();
+
+        emit CourseUnregistered(courseId, courses[courseId].name);
     }
 
     function getCourseURI(uint256 courseId) public view returns (string memory) {
         return courses[courseId].baseURI;
     }
+
+    function getCourse(uint256 courseId) public view returns (Course memory) {
+        return courses[courseId];
+    }
     
     // Student management
-    function generateCertificate(uint256 courseId, address student) 
+    function registerStudent(uint256 courseId, address student) 
     public 
     onlyRole(MINTER_ROLE) 
     onlyActiveCourse(courseId) 
     onlyUncertifiedStudent(courseId, student)
     nonZero(student) {
         require(!students[courseId][student].isCertified, "Student already registered");
-        students[courseId][student].id = studentCounter.current();
+        uint256 studentId = StudentsERC721(studentsERC721).safeMint(student, courses[courseId].baseURI);
+        students[courseId][student].id = studentId;
         students[courseId][student].isCertified = true;
         studentCounter.increment();
         courses[courseId].activeStudentsBalance += 1;
+        courses[courseId].studentsBalance += 1;
+        
+        emit StudentRegistered(courseId, studentId, student);
     }
 
     function unregisterStudent(uint256 courseId, address student) public onlyRole(MINTER_ROLE) onlyCertifiedStudent(courseId, student) {
         students[courseId][student].isCertified = false;
         courses[courseId].activeStudentsBalance -= 1;
+
+        emit StudentUnregistered(courseId, students[courseId][student].id, student);
     }
 
     function getStudentCertificate(uint256 courseId, address student) 
@@ -187,10 +231,6 @@ contract Institutions is Initializable, PausableUpgradeable, AccessControlUpgrad
     modifier onlyUncertifiedStudent(uint256 courseId, address studentId) {
         require(students[courseId][studentId].isCertified, "Student is already certified");
         _;
-    }
-
-    modifier onlyUniqueBaseURI(string memory _baseURI) {
-        require(!baseURIExists[_baseURI], "Base URI repeated");
         _;
     }
 }

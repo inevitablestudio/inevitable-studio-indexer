@@ -13,12 +13,25 @@ import "./Institutions.sol";
 contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
+    event InstitutionRegistered (
+        uint256 institutionId,
+        address institutionAddress, 
+        string institutionName
+    );
+
+    event InstitutionUnregistered (
+        uint256 institutionId,
+        address institutionAddress, 
+        string institutionName
+    );
+
     bytes4 public constant INSTITUTIONS_INTERFACE_ID = 0x494e5354;
 
     struct Institution {
         uint256 id;
         bool isActive;
         uint256 activeCoursesBalance;
+        string name;
     }
     mapping(address => Institution) public institutions;
     mapping(uint256 => address) public institutionIdToAddress;
@@ -29,16 +42,24 @@ contract Indexer is Initializable, PausableUpgradeable, AccessControlUpgradeable
     }
 
     // Institution management
-    function registerInstitution(address institutionAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function registerInstitution(address institutionAddress, string memory institutionName) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(ERC165Upgradeable(institutionAddress).supportsInterface(INSTITUTIONS_INTERFACE_ID), "Contract must implement Institutions interface");
-        institutions[institutionAddress].id = institutionCounter.current();
+        uint256 institutionId = institutionCounter.current();
+        institutions[institutionAddress].id = institutionId;
         institutions[institutionAddress].activeCoursesBalance = 0;
         institutions[institutionAddress].isActive = true;
+        institutions[institutionAddress].name = institutionName;
+        institutionIdToAddress[institutionId] = institutionAddress;
         institutionCounter.increment();
+        
+        emit InstitutionRegistered(institutionId, institutionAddress, institutionName);
     }
 
     function unregisterInstitution(uint256 institutionId) public onlyRole(DEFAULT_ADMIN_ROLE) onlyActiveInstitution(institutionId) {
-        institutions[institutionIdToAddress[institutionId]].isActive = false;
+        address institutionAddress = institutionIdToAddress[institutionId];
+        institutions[institutionAddress].isActive = false;
+        
+        emit InstitutionUnregistered(institutionId, institutionAddress, institutions[institutionAddress].name);
     }
 
     function initialize() initializer public {
